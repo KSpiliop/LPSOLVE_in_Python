@@ -62,7 +62,7 @@ The **mathematical programming formulation** is given below. cij , i=1,...,10  j
 - The first set of constraints ensures that each demand point is allocated to exactly one location.
 - The second set of constraints forces each location j to have at most fj demand points.
 
-<img style="float: left;" src="https://cloud.githubusercontent.com/assets/12450688/24873799/ee2099c6-1e2a-11e7-980a-43c0090be6c1.jpg" width="400" height="800" />
+<img style="float: left;" src="https://cloud.githubusercontent.com/assets/12450688/24873799/ee2099c6-1e2a-11e7-980a-43c0090be6c1.jpg" width="400" height="300" />
 
 
 
