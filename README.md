@@ -3,13 +3,11 @@
 
 **LPSOLVE** is an excellent open source solver for mathematical programming problems. It can be used for linear (LP), integer (IP) and mixed integer linear (MILP) problems. It is distributed under the [GNU Lesser General Public License](https://en.wikipedia.org/wiki/GNU_Lesser_General_Public_License "GNU Lesser General Public License"). 
 
-All documentation for LPSOLVE can be found [here](http://lpsolve.sourceforge.net/5.5/ "LPSOLVE"). This short tutorial shows how to use LPSOLVE from Python in Windows. It is also available as a Jupiter notebook [here](https://github.com/KSpiliop/LPSOLVE_in_Python/blob/master/Notebook/Calling%2BLPSOLVE%2Bfrom%2BPython.ipynb "Notebook")
+All documentation for LPSOLVE can be found [here](http://lpsolve.sourceforge.net/5.5/ "LPSOLVE"). This short tutorial shows how to use LPSOLVE from Python in Windows. It is also available as a Jupiter notebook [here](https://github.com/KSpiliop/LPSOLVE_in_Python/blob/master/Code/Calling_LPSOLVE_from_Python.ipynb "Notebook") and as a Python file [here](https://github.com/KSpiliop/LPSOLVE_in_Python/blob/master/Code/Calling_LPSOLVE_from_Python.py ".py file").
 
 <h2 style="color:blue;">Installation of LPSOLVE in Windows</h2> 
 
-There are several articles on running LPSOLVE from Python and even a package for it, [PyLPSolve](http://www.stat.washington.edu/~hoytak/code/pylpsolve/ "PyLPSolve"). But PyLPSolve cannot yet be installed on Windows. Personally, I had also problems with the instructions in [LPSOLVE pages](http://lpsolve.sourceforge.net/5.5/Python.htm "Using lpsolve from Python"). Some other unofficial distributions do not work with Windows 64-bit.  
-
-Probably a general solution is the one found in [this post](http://stackoverflow.com/questions/23411205/how-to-use-lpsolve-from-python-in-windows-64bit "Post").
+There are several articles on running LPSOLVE from Python and even a package for it, [PyLPSolve](http://www.stat.washington.edu/~hoytak/code/pylpsolve/ "PyLPSolve"). But PyLPSolve cannot yet be installed on Windows. There are also reported problems with the instructions in [LPSOLVE pages](http://lpsolve.sourceforge.net/5.5/Python.htm "Using lpsolve from Python"). Some other unofficial distributions do not work with Windows 64-bit. Probably the best solution is the one found in [this post](http://stackoverflow.com/questions/23411205/how-to-use-lpsolve-from-python-in-windows-64bit "Post").
 
 So, visit the page [http://www.lfd.uci.edu/~gohlke/pythonlibs/](http://www.lfd.uci.edu/~gohlke/pythonlibs/ "Unofficial Windows Binaries for Python Extension Packages") and find the appropriate Python wheel package under the heading:    
 
@@ -25,11 +23,11 @@ Locate the folder with the wheel file and follow the usual pip -install procedur
 
 The data for the example are taken from this [ILOG CPLEX Optimization Studio](https://www.ibm.com/support/knowledgecenter/SSSA5P_12.6.2/ilog.odms.ide.help/OPL_Studio/opllanguser/topics/opl_languser_app_areas_IP_warehse.html "ILOG CPLEX link") link. 
 
-In warehouse location problems we are looking for the optimal places of warehouses to serve outlets/ demand points.
+In warehouse location problems we are looking for the optimal places of warehouses to serve outlets/ demand points and the allocation of demand points to these places.
 
 Suppose we have 5 potential locations for warehouses, **L1,L2,...,L5** and 10 demand points **D1,D2,...,D10**.
 
-The **fixed costs** for the operation of the warehouses are all equal to **30 monetary units**. The variable costs (for example transportation costs) for any assignment of demand points to locations are shown in the following table.</h1>     
+The **fixed costs** for the operation of the warehouses are all equal to **30 monetary units**. The variable costs (for example transportation costs) for all pairs of demand points and locations are shown in the following table.</h1>     
 
 <p style="text-align: center;">  
 Operating costs</p>
@@ -56,11 +54,10 @@ Capacity constraints</p>
 |:--:|:--:|:--:|:--:|:--:|
 | 1  |  4 | 2  |  1 |  3 |
 
-The **mathematical programming formulation** is given below. cij , i=1,...,10 ; j=1,...,5 are the variable costs and  
-fj, j=1,...,5 are the capacities of the locations.
+The **mathematical programming formulation** is given below. Denote by cij , i=1,...,10 ; j=1,...,5 the variable cost for demand point i and location j and by fj, j=1,...,5 the capacity at location j.
 
-- The wij binary variables denote the assignments of demand points to locations : wij=1 if demand point i is assigned to location j, otherwise 0. 
-- The dj binary variables indicate the selected locations: dj=1 if location j is used, otherwise 0.
+- The binary variables wij denote the assignment of demand points to locations : wij=1 if demand point i is assigned to location j, otherwise 0. 
+- The binary variables dj indicate the selection of locations: dj=1 if location j is used, otherwise 0.
 - The objective function minimizes the total cost, i.e. the fixed and variable costs. 
 - The first set of constraints ensures that each demand point is allocated to exactly one location.
 - The second set of constraints forces each location j to have at most fj demand points and also pushes the wij variables to zero when a location is not selected (note that in a larger problem we would use separate wij <= dj constraints for this).      
@@ -144,7 +141,10 @@ lpsolve('set_obj_fn', lp, obj_values)
 lpsolve('set_minim', lp)
 ```
 
-We can now define the constraints one by one. First is the set of 10 constraints which ensures that each demand point is assigned to exactly one location. For each one, we pass to 'add_constraint' a list with the coefficients, the type of the constraint (here 'EQ' meaning equality) and the RHS. We also set the name of each constraint with 'set_row_name'.
+We can now define the constraints one by one. First is the set of 10 constraints which ensures that each demand point is assigned to exactly one location. For each one, we pass to 'add_constraint' a list with the coefficients, the type of the constraint (here 'EQ' meaning equality) and the RHS. We also set the name of each constraint with 'set_row_name'.  
+
+Note that the LPSOLVE API has a version of this function (add_constraintex) which allows to specify only the non-zero elements of a row in the matrix. 
+
 
 
 ```python
