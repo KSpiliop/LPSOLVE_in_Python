@@ -30,7 +30,7 @@ Suppose we have 5 potential locations for warehouses, **L1,L2,...,L5** and 10 de
 The **fixed costs** for the operation of the warehouses are all equal to **30 monetary units**. The variable costs (for example transportation costs) for all pairs of demand points and locations are shown in the following table.</h1>     
 
 <p style="text-align: center;">  
-Operating costs</p>
+Variable costs</p>
 
 |        | L1 | L2 | L3 | L4 | L5 |
 |:--:    |:--:|:--:|:--:|:--:|:--:|
@@ -85,7 +85,7 @@ help(lpsolve)
     
     
 
-Then we define the data. We put the operating costs in a 2-dimensional  array **c** and the capacities in a 1-dimensional array **f**. We use floats because the coefficients must be passed as real numbers.
+Then we define the data. We put the variable costs in a 2-dimensional  array **c** and the capacities in a 1-dimensional array **f**. We use floats because the coefficients must be passed as real numbers.
 
 We also put the (1-index) variable names in a list **col_names**. First are the wij variables (with the index j of the location running first) and then are the dj variables.
 
@@ -125,7 +125,7 @@ lp = lpsolve('make_lp', 0, ncols)
 lpsolve('set_verbose', lp, 'IMPORTANT')
 ```
 
-Next, we put the variable names using the internal function set_col_name. Note that the indices of variables (columns) and constraints in LPSOLVE are 1-based. 
+Next, we put the variable names using the function set_col_name. Note that the indices of variables (columns) and constraints in LPSOLVE are 1-based. 
 
 We define in a list the coefficients of the objective function ('set_obj_fn') and we set the direction of optimization to min (set_minim).
 
@@ -172,11 +172,11 @@ for j in range(1,6):
     lpsolve('set_row_name',lp,10+j,'SECOND'+str(j))
 ```
 
-The last step is to define all variables as binary using 'set_binary'. The last argument (1) in these calls is a True flag.
+The last step before the solution is to define all variables as binary using 'set_binary'. The last argument (1) in these calls is a True flag. In other problems we might specify bounds, SOS sets etc.
 
 We also export the model in a file, in LP format. This can be used for confirmation or read from the [LPSOLVE IDE](http://lpsolve.sourceforge.net/5.5/IDE.htm "LPSOLVE IDE"). LPSOLVE also allows the model export into MPS format.
 
-Finally, we call 'solve'. The return code is 0 (success). We can now retrieve the value of the objective function ('get_objective') and the values of the non-zero variables in the solution ('get_variables') using the first element returned. We do NOT dimension any variable to accept the variables as the lpsolve driver takes care of the dimensioning. The same applies for the call to 'get_constraints' to retrieve the LHS of the constraints at the optimal solution.  
+Finally, we call 'solve'. The return code is 0 (success). We can now retrieve the value of the objective function ('get_objective') and the values of the non-zero variables in the solution ('get_variables') using the first element returned. We do NOT dimension any variable for the returned values, as the lpsolve driver takes care of the dimensioning. The same applies for the call to 'get_constraints' to retrieve the LHS of the constraints at the optimal solution.  
 
 The optimal solution is to use L1,L2,L3 and L5 and assign:
 - D4 to L1
@@ -192,6 +192,7 @@ for j in range(ncols):
     lpsolve('set_binary',lp,j+1,1) 
 
 lpsolve('write_lp', lp, 'warehouse.lp')
+
 ret = lpsolve('solve', lp)   
 print('return code: {:2d}\n'.format(ret))
 
