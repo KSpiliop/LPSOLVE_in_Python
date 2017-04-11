@@ -3,14 +3,16 @@
 
 **LPSOLVE** is an excellent open source solver for mathematical programming problems. It can be used for linear (LP), integer (IP) and mixed integer linear (MILP) problems. It is distributed under the [GNU Lesser General Public License](https://en.wikipedia.org/wiki/GNU_Lesser_General_Public_License "GNU Lesser General Public License"). 
 
-[http://lpsolve.sourceforge.net/5.5/](http://lpsolve.sourceforge.net/5.5/ "LPSOLVE")
-
-This tutorial shows how to use LPSOLVE from Python. 
+All documentation for LPSOLVE can be found [here](http://lpsolve.sourceforge.net/5.5/ "LPSOLVE"). This short tutorial shows how to use LPSOLVE from Python in Windows. It is also available as a Jupiter notebook here **xxxx**.
 
 
-<h2 style="color:blue;">Installation</h2> 
+<h2 style="color:blue;">Installation of LPSOLVE in Windows</h2> 
 
-Visit the page [http://www.lfd.uci.edu/~gohlke/pythonlibs/](http://www.lfd.uci.edu/~gohlke/pythonlibs/ "Unofficial Windows Binaries for Python Extension Packages") and find the appropriate Python wheel package under the heading:    
+There are several articles on running LPSOLVE from Python and even a package for it, [PyLPSolve](http://www.stat.washington.edu/~hoytak/code/pylpsolve/ "PyLPSolve"). But PyLPSolve cannot yet be installed on Windows. Personally, I had also problems with the instructions in [LPSOLVE pages](http://lpsolve.sourceforge.net/5.5/Python.htm "Using lpsolve from Python"). Some other unofficial distributions do not work with Windows 64-bit.  
+
+Probably a general solution is the one found in [this post](http://stackoverflow.com/questions/23411205/how-to-use-lpsolve-from-python-in-windows-64bit "Post").
+
+So, visit the page [http://www.lfd.uci.edu/~gohlke/pythonlibs/](http://www.lfd.uci.edu/~gohlke/pythonlibs/ "Unofficial Windows Binaries for Python Extension Packages") and find the appropriate Python wheel package under the heading:    
 
 > lp_solve, a Mixed Integer Linear Programming (MILP) solver.
 
@@ -18,6 +20,7 @@ The .whl files differ by Python version and Windows architecture (32/64). For ex
 
 > lpsolve55‑5.5.2.5‑cp35‑cp35m‑win_amd64.whl
 
+Locate the folder with the wheel file and follow the usual pip -install procedure. 
 
 <h2 style="color:blue;">The example problem: Warehouse location</h2> 
 
@@ -55,7 +58,8 @@ Capacity constraints</p>
 |:--:|:--:|:--:|:--:|:--:|
 | 1  |  4 | 2  |  1 |  3 |
 
-The **mathematical programming formulation** is given below. cij , i=1,...,10  j=1,...,5 are the operating costs and fj, j=1,...,5 are the capacities of the locations.
+The **mathematical programming formulation** is given below. cij , i=1,...,10 ; j=1,...,5 are the operating costs and  
+fj, j=1,...,5 are the capacities of the locations.
 
 - The wij binary variables denote the assignments of demand points to locations : wij=1 if demand point i is assigned to location j, otherwise 0. 
 - The dj binary variables indicate the selected locations: dj=1 if location j is used, otherwise 0. 
@@ -66,7 +70,9 @@ The **mathematical programming formulation** is given below. cij , i=1,...,10  j
 
 
 
-First we import numpy and the LPSOLVE library. The library exposes only a function lpsolve() therefore we import 'all' to avoid writing lpsolve55.lpsolve() at each call. 
+First we import numpy and the LPSOLVE library. The library exposes only one wrapper function lpsolve() therefore we import 'all' to avoid writing lpsolve55.lpsolve() at each call. 
+
+A complete list of the LPSOLVE API can be found in [LPSOLVE pages](http://lpsolve.sourceforge.net/5.5/ "LPSOLVE").
 
 
 ```python
@@ -139,7 +145,7 @@ lpsolve('set_obj_fn', lp, obj_values)
 lpsolve('set_minim', lp)
 ```
 
-We can now define the constraints one by one. First is the set of 10 constraints which ensures that each demand point is assigned to exactly one location. For each one, we pass to 'add_constraint' a list with the coefficients, the type of the constraint (here 'EQ' meaning equality) and the RHS. 
+We can now define the constraints one by one. First is the set of 10 constraints which ensures that each demand point is assigned to exactly one location. For each one, we pass to 'add_constraint' a list with the coefficients, the type of the constraint (here 'EQ' meaning equality) and the RHS. We also set the name of each constraint with 'set_row_name'.
 
 
 ```python
@@ -149,6 +155,7 @@ for i in range(1,11):
     indices = [col_names.index(name) for name in const_names]
     values = np.zeros(ncols) ; values[indices]=1.
     lpsolve('add_constraint',lp, values, 'EQ', 1.0)
+    lpsolve('set_row_name',lp,i,'FIRST'+str(i))
 ```
 
 The second set of constraints is entered similarly. 
@@ -163,13 +170,14 @@ for j in range(1,6):
     index = col_names.index('d'+str(j))
     values[index] = -f[j-1]
     lpsolve('add_constraint',lp, values, 'LE', 0.0)
+    lpsolve('set_row_name',lp,10+j,'SECOND'+str(j))
 ```
 
 The last step is to define all variables as binary using 'set_binary'. The last argument (1) is a True flag.
 
-We also export the model in a file, in LP format. xxxxx
+We also export the model in a file, in LP format. This can be used for confirmation or read from the [LPSOLVE IDE](http://lpsolve.sourceforge.net/5.5/IDE.htm "LPSOLVE IDE").
 
-Finally, we call 'solve'. The return code is 0 (success).
+Finally, we call 'solve'. The return code is 0 (success). We can now retrieve the value of the objective function ('get_objective') and the values of the non-zero variables in the solution ('get_variables') using the first element returned. We do NOT dimension any variable to accept the variables as the lpsolve driver takes care of the dimensioning. The same applies for the call to 'get_constraints' to retrieve the LHS at the optimal solution.  
 
 
 ```python
@@ -188,8 +196,15 @@ print('non-zero variable values:\n')
 for i in range(len(vars)):
     if vars[i] > 1e-6:
         print('{:4s} = {:6.2f}'.format(col_names[i],vars[i]))
+        
+cons = lpsolve('get_constraints', lp)[0]      
+print('\nconstraints LHS:\n')
+for i in range(len(cons)):
+    nm = lpsolve('get_row_name',lp,i+1)
+    print('{:8s} = {:6.2f}'.format(nm,cons[i]))
 
-lpsolve('delete_lp', lp)
+print('\nverification:\n')    
+
 ```
 
     return code:  0
@@ -213,3 +228,33 @@ lpsolve('delete_lp', lp)
     d3   =   1.00
     d5   =   1.00
     
+    constraints LHS:
+    
+    FIRST1   =   1.00
+    FIRST2   =   1.00
+    FIRST3   =   1.00
+    FIRST4   =   1.00
+    FIRST5   =   1.00
+    FIRST6   =   1.00
+    FIRST7   =   1.00
+    FIRST8   =   1.00
+    FIRST9   =   1.00
+    FIRST10  =   1.00
+    SECOND1  =   0.00
+    SECOND2  =   0.00
+    SECOND3  =   0.00
+    SECOND4  =   0.00
+    SECOND5  =   0.00
+    
+    verification:
+    
+    
+
+Finally, we delete the model data structures. This is good practice. 
+
+
+```python
+lpsolve('delete_lp', lp)
+```
+
+There is much functionality which is not shown in this brief tutorial, especially in the parameters of the solver. The interested reader can read the LPSOLVE API and experiment with it. 
