@@ -3,8 +3,7 @@
 
 **LPSOLVE** is an excellent open source solver for mathematical programming problems. It can be used for linear (LP), integer (IP) and mixed integer linear (MILP) problems. It is distributed under the [GNU Lesser General Public License](https://en.wikipedia.org/wiki/GNU_Lesser_General_Public_License "GNU Lesser General Public License"). 
 
-All documentation for LPSOLVE can be found [here](http://lpsolve.sourceforge.net/5.5/ "LPSOLVE"). This short tutorial shows how to use LPSOLVE from Python in Windows. It is also available as a Jupiter notebook here **xxxx**.
-
+All documentation for LPSOLVE can be found [here](http://lpsolve.sourceforge.net/5.5/ "LPSOLVE"). This short tutorial shows how to use LPSOLVE from Python in Windows. It is also available as a Jupiter notebook [here](https://github.com/KSpiliop/LPSOLVE_in_Python/blob/master/Notebook/Calling%2BLPSOLVE%2Bfrom%2BPython.ipynb "Notebook")
 
 <h2 style="color:blue;">Installation of LPSOLVE in Windows</h2> 
 
@@ -24,14 +23,13 @@ Locate the folder with the wheel file and follow the usual pip -install procedur
 
 <h2 style="color:blue;">The example problem: Warehouse location</h2> 
 
-The data for the example are taken from:   
-[https://www.ibm.com/support/knowledgecenter/SSSA5P_12.6.2/ilog.odms.ide.help/OPL_Studio/opllanguser/topics/opl_languser_app_areas_IP_warehse.html](https://www.ibm.com/support/knowledgecenter/SSSA5P_12.6.2/ilog.odms.ide.help/OPL_Studio/opllanguser/topics/opl_languser_app_areas_IP_warehse.html "IBM Link")
+The data for the example are taken from this [ILOG CPLEX Optimization Studio](https://www.ibm.com/support/knowledgecenter/SSSA5P_12.6.2/ilog.odms.ide.help/OPL_Studio/opllanguser/topics/opl_languser_app_areas_IP_warehse.html "ILOG CPLEX link") link. 
 
 In warehouse location problems we are looking for the optimal places of warehouses to serve outlets/ demand points.
 
 Suppose we have 5 potential locations for warehouses, **L1,L2,...,L5** and 10 demand points **D1,D2,...,D10**.
 
-The **fixed costs** for the opening of the warehouses are all equal to **30 monetary units**. The operating costs for any assignment of demand point to location are shown in the following table.</h1>     
+The **fixed costs** for the operation of the warehouses are all equal to **30 monetary units**. The variable costs (for example transportation costs) for any assignment of demand points to locations are shown in the following table.</h1>     
 
 <p style="text-align: center;">  
 Operating costs</p>
@@ -58,13 +56,14 @@ Capacity constraints</p>
 |:--:|:--:|:--:|:--:|:--:|
 | 1  |  4 | 2  |  1 |  3 |
 
-The **mathematical programming formulation** is given below. cij , i=1,...,10 ; j=1,...,5 are the operating costs and  
+The **mathematical programming formulation** is given below. cij , i=1,...,10 ; j=1,...,5 are the variable costs and  
 fj, j=1,...,5 are the capacities of the locations.
 
 - The wij binary variables denote the assignments of demand points to locations : wij=1 if demand point i is assigned to location j, otherwise 0. 
-- The dj binary variables indicate the selected locations: dj=1 if location j is used, otherwise 0. 
+- The dj binary variables indicate the selected locations: dj=1 if location j is used, otherwise 0.
+- The objective function minimizes the total cost, i.e. the fixed and variable costs. 
 - The first set of constraints ensures that each demand point is allocated to exactly one location.
-- The second set of constraints forces each location j to have at most fj demand points.
+- The second set of constraints forces each location j to have at most fj demand points and also pushes the wij variables to zero when a location is not selected (note that in a larger problem we would use separate wij <= dj constraints for this).      
 
 <img style="float: left;" src="https://cloud.githubusercontent.com/assets/12450688/24873799/ee2099c6-1e2a-11e7-980a-43c0090be6c1.jpg" width="400" height="300" />
 
@@ -131,7 +130,7 @@ lpsolve('set_verbose', lp, 'IMPORTANT')
 
 Next, we put the variable names using the internal function set_col_name. Note that the indices of variables (columns) and constraints in LPSOLVE are 1-based. 
 
-We define the coefficients of the objective function ('set_obj_fn') and we set the direction of optimization to min (set_minim).
+We define in a list the coefficients of the objective function ('set_obj_fn') and we set the direction of optimization to min (set_minim).
 
 
 
@@ -173,11 +172,19 @@ for j in range(1,6):
     lpsolve('set_row_name',lp,10+j,'SECOND'+str(j))
 ```
 
-The last step is to define all variables as binary using 'set_binary'. The last argument (1) is a True flag.
+The last step is to define all variables as binary using 'set_binary'. The last argument (1) in these calls is a True flag.
 
-We also export the model in a file, in LP format. This can be used for confirmation or read from the [LPSOLVE IDE](http://lpsolve.sourceforge.net/5.5/IDE.htm "LPSOLVE IDE").
+We also export the model in a file, in LP format. This can be used for confirmation or read from the [LPSOLVE IDE](http://lpsolve.sourceforge.net/5.5/IDE.htm "LPSOLVE IDE"). LPSOLVE also allows the model export into MPS format.
 
-Finally, we call 'solve'. The return code is 0 (success). We can now retrieve the value of the objective function ('get_objective') and the values of the non-zero variables in the solution ('get_variables') using the first element returned. We do NOT dimension any variable to accept the variables as the lpsolve driver takes care of the dimensioning. The same applies for the call to 'get_constraints' to retrieve the LHS at the optimal solution.  
+Finally, we call 'solve'. The return code is 0 (success). We can now retrieve the value of the objective function ('get_objective') and the values of the non-zero variables in the solution ('get_variables') using the first element returned. We do NOT dimension any variable to accept the variables as the lpsolve driver takes care of the dimensioning. The same applies for the call to 'get_constraints' to retrieve the LHS of the constraints at the optimal solution.  
+
+The optimal solution is to use L1,L2,L3 and L5 and assign:
+- D4 to L1
+- D2,D6,D7 and D9 to L2
+- D8 and D10 to L3
+- D1,D3,D5 and D8 to L5
+
+The capacities are satisfied exactly and the total cost is 383 monetary units.
 
 
 ```python
@@ -203,7 +210,6 @@ for i in range(len(cons)):
     nm = lpsolve('get_row_name',lp,i+1)
     print('{:8s} = {:6.2f}'.format(nm,cons[i]))
 
-print('\nverification:\n')    
 
 ```
 
@@ -245,9 +251,6 @@ print('\nverification:\n')
     SECOND3  =   0.00
     SECOND4  =   0.00
     SECOND5  =   0.00
-    
-    verification:
-    
     
 
 Finally, we delete the model data structures. This is good practice. 
